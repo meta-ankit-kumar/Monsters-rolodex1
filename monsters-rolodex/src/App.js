@@ -1,75 +1,65 @@
-import { Component } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import CardList from "./components/card-list/card-list.component";
 import SearchBox from "./components/search-box/search-box.component";
 import { SEARCH_BUTTON } from "./shared/utils";
-class App extends Component {
-  constructor() {
-    super();
-    this.state = {
-      monsters: [],
-      searchQuery: '',
-      isLoading: false
-    };
-  }
+import { sleep } from "./shared/util";
 
-  sleep(time) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => resolve(), time)
+const App = () => {
+  const [monsters, setMonsters] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredMonsters, setFilteredMonsters] = useState(monsters);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSearch = (event) => {
+    setSearchQuery(event.target.value);
+  };
+  useEffect(() => {
+    const filteredMonstersList = monsters.filter((monster) => {
+      return monster.name.toLowerCase().includes(searchQuery.toLowerCase());
     });
-  }
+    setFilteredMonsters(filteredMonstersList);
+  }, [monsters, searchQuery]);
 
-  async componentDidMount() {
-    this.setState({
-      isLoading: true
-    })
-    await this.sleep(3000);
-    this.setState({
-      isLoading: false
-    })
-    fetch("https://jsonplaceholder.typicode.com/users").then((res) => {
-      res.json().then((users) =>
-        this.setState({
-          monsters: users
+  useEffect(() => {
+    setIsLoading(true);
+    sleep(3000).then(res1 => {
+      fetch("https://jsonplaceholder.typicode.com/users")
+        .then((res) => {
+          res.json().then((users) => {
+            setMonsters(users);
+          });
         })
-      );
-    }).catch(error => {
-      console.log("Error", error)
-    });
-  }
+        .catch((error) => {
+          console.log("Error", error);
+        });
+    }, []);
+  }, []);
 
-  getListOfMonsters = () => {
-    return this.state.monsters.filter(monster => {
-     return monster.name.toLowerCase().includes(this.state.searchQuery.toLowerCase())
-    })
-  }
+  useEffect(() => setIsLoading(!isLoading), [monsters])
 
-  handleSearch = (event) => {
-    this.setState({
-      searchQuery: event.target.value
-    })
+  if (isLoading) {
+    return (
+      <div className="spinner-container">
+        <div className="spinner"></div>
+        <p>Loading Monsters</p>
+      </div>
+    );
   }
-  render() {
-    if(this.state.isLoading)
-      return (
-        <div className="spinner-container">
-          <div className="spinner"></div>
-          <p>Loading Monsters</p>
-        </div>
-      );
-    else{
-      return (
-        <div className="App">
-          <div className="search-container">
-            <SearchBox handleSearch={this.handleSearch} className={SEARCH_BUTTON.className} placeholder={SEARCH_BUTTON.placeholder}/>
-          </div>
-          <div className="card-container">
-            <CardList monsters={this.getListOfMonsters()}/>
-          </div>
-        </div>
-      )
-    }
-  }
-}
+  return (
+    <div className="App">
+      <div className="search-container">
+        <SearchBox
+          handleSearch={handleSearch}
+          className={SEARCH_BUTTON.className}
+          placeholder={SEARCH_BUTTON.placeholder}
+        />
+      </div>
+      <div className="card-container">
+        <CardList monsters={filteredMonsters} />
+      </div>
+    </div>
+  );
+};
 
 export default App;
