@@ -40,7 +40,7 @@ class App extends Component {
 
   getListOfMonsters = () => {
     return this.state.monsters.filter(monster => {
-     return monster.name.includes(this.state.searchQuery)
+     return monster.name.toLowerCase().includes(this.state.searchQuery.toLowerCase())
     })
   }
 
